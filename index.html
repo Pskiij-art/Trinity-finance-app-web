@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trinity Finance Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; touch-action: manipulation; }
+    .app-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); min-height: 20vh; border-bottom-left-radius: 3rem; border-bottom-right-radius: 3rem; }
+    .nav-icon { filter: grayscale(100%); transition: filter 0.2s; }
+    .nav-icon.active { filter: grayscale(0%); color: #2563eb; }
+    .transaction-list::-webkit-scrollbar, .recurring-list::-webkit-scrollbar { width: 4px; }
+    .transaction-list::-webkit-scrollbar-thumb, .recurring-list::-webkit-scrollbar-thumb { background-color: #a8a8a8; border-radius: 10px; }
+    .transaction-list::-webkit-scrollbar-track, .recurring-list::-webkit-scrollbar-track { background: #f1f1f1; }
+    .status-box { position: sticky; top: 0; z-index: 50; }
+    #main-content { padding-bottom: 6rem; }
+  </style>
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="fixed inset-0 bg-white flex flex-col items-center justify-center p-6 z-50">
+    <div class="w-full max-w-sm">
+      <h1 class="text-4xl font-extrabold text-blue-700 mb-2 text-center">Trinity Finance</h1>
+      <p class="text-md text-gray-500 mb-8 text-center">Login to Your Personal Dashboard</p>
+      <form id="custom-login-form" class="bg-gray-50 p-6 rounded-xl shadow-lg space-y-4">
+        <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Login</h2>
+        <div>
+          <label for="login-email" class="block text-sm font-medium text-gray-700">Username (or Email)</label>
+          <input type="text" id="login-email" placeholder="highheresies@gmail.com" value="highheresies@gmail.com" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+        </div>
+        <div>
+          <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="login-password" placeholder="Arney987" value="Arney987" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+        </div>
+        <div class="p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-sm mb-4">
+          <p class="font-bold mb-1">Mock Credentials:</p>
+          <p>Use Email: <b>highheresies@gmail.com</b> and Password: <b>Arney987</b> to access the dashboard as <b>Steven Arney</b>.</p>
+        </div>
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-150 shadow-md">
+          Secure Login
+        </button>
+      </form>
+      <div id="auth-message" class="mt-4 p-3 hidden text-center text-sm font-medium rounded-lg"></div>
+    </div>
+  </div>
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container" class="max-w-md mx-auto bg-white min-h-screen shadow-lg hidden">
+    <div class="app-bg p-6 pb-20 relative">
+      <h1 class="text-3xl font-extrabold text-white mb-1">Trinity Finance Bank</h1>
+      <p class="text-sm text-blue-200">Secure Personal Dashboard</p>
+    </div>
+    <div id="status-log" class="p-3 bg-yellow-100 text-yellow-800 text-xs font-mono status-box border-b border-yellow-300">
+      System Status: Initializing...
+    </div>
+    <div id="main-content" class="px-4 -mt-16">
+      <div id="message-container" class="mb-4 hidden">
+        <div id="message-box" class="p-3 text-sm font-semibold rounded-lg shadow-md" role="alert"></div>
+      </div>
+      <div id="dashboard-screen" class="space-y-4"></div>
+      <div id="history-screen" class="space-y-4 hidden"></div>
+      <div id="send-screen" class="space-y-4 hidden"></div>
+      <div id="recurring-screen" class="space-y-4 hidden"></div>
+      <div id="profile-screen" class="space-y-4 hidden"></div>
+    </div>
+    <div id="otp-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+      <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs transform transition-all duration-300">
+        <div class="text-center">
+          <div class="mb-4 inline-flex p-3 bg-blue-100 rounded-full">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Confirm Transfer with OTP</h3>
+          <p class="text-sm text-gray-500 mb-4" id="otp-message">A 4-digit verification code has been generated. Please enter it below to confirm transfer.</p>
+          <input type="text" id="otp-input" placeholder="Enter 4-digit code" maxlength="4" class="w-full text-center p-3 border border-gray-300 rounded-lg text-xl tracking-widest font-mono focus:ring-blue-500 focus:border-blue-500 mb-4" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+          <button id="verify-transfer-btn" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-150 shadow-md mb-2">Verify & Transfer</button>
+          <button id="cancel-transfer-btn" class="w-full py-2 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition duration-150">Cancel Transfer</button>
+          <p class="text-xs text-gray-400 mt-3">Hint: Check the developer console for the mock OTP.</p>
+        </div>
+      </div>
+    </div>
+    <nav id="app-nav" class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 shadow-xl rounded-t-2xl z-40 hidden">
+      <div class="flex justify-around py-3">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-xs text-blue-600 font-semibold active">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l-2-2m-7 7l7-7"></path></svg>
+          <span>Home</span>
+        </button>
+        <button onclick="navigate('history')" id="nav-history" class="flex flex-col items-center text-xs text-gray-500 font-medium nav-icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>History</span>
+        </button>
+        <button onclick="navigate('send')" id="nav-send" class="flex flex-col items-center text-xs text-gray-500 font-medium nav-icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span>Send</span>
+        </button>
+        <button onclick="navigate('recurring')" id="nav-recurring" class="flex flex-col items-center text-xs text-gray-500 font-medium nav-icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span>Recurring</span>
+        </button>
+        <button onclick="navigate('profile')" id="nav-profile" class="flex flex-col items-center text-xs text-gray-500 font-medium nav-icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          <span>Profile</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+  <!-- SIMPLIFIED APP LOGIC - INCLUDES FIXED FIREBASE CONFIG -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+    // ---- FIXED FIREBASE CONFIG ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyACOITBYfN3Y1G1-QTWgo_t1PutVlsLYKI",
+      authDomain: "trinity-finance-app-6002.firebaseapp.com",
+      projectId: "trinity-finance-app-6002",
+      storageBucket: "trinity-finance-app-6002.appspot.com",
+      messagingSenderId: "545859635678",
+      appId: "1:545859635678:web:6b13c3da6c61a23b23354f",
+      measurementId: "G-NLWB0495RW"
+    };
+    const appId = "trinity-finance-app-web";
+
+    // ---- YOUR APP LOGIC GOES HERE ----
+    // (Include all your business logic, screens, event listeners, etc.)
+    // If the code was too long to fit here, copy your logic between the <script> tags (from your working local example).
+    // Just ensure everywhere you referenced "__firebase_config" or "__app_id" use the hardcoded config and "trinity-finance-app-web".
+    // The rest of your computational logic remains unchanged.
+
+    // Example: Firebase initialization
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Continue with your login, dashboard, nav, and UI code, exactly as before, within this <script type="module"> block.
+
+  </script>
+</body>
+</html>
